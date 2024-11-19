@@ -1,0 +1,5 @@
+homepage: "https://stape.io/"
+documentation: "https://github.com/stape-io/facebook-web-tag"
+versions:
+  - sha: 8342d891e6222728757adc77ee1831f45d766050
+    changeNotes: Initial release.
