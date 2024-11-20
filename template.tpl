@@ -926,7 +926,7 @@ function getUAEventData(eventName, objectProperties, ecommerce) {
   if (eventActionMap[eventName]) {
     let action = eventActionMap[eventName];
 
-    if (ecommerce[action].products && getType(ecommerce[action].products) === 'array') {
+    if (ecommerce[action] && ecommerce[action].products && getType(ecommerce[action].products) === 'array') {
       objectProperties = {
         content_type: 'product',
         contents: ecommerce[action].products.map((prod) => ({ id: prod.id, quantity: prod.quantity })),
