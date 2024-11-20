@@ -797,8 +797,9 @@ function getEventData(eventName) {
 
     if (ecommerce) {
       objectProperties = getUAEventData(eventName, objectProperties, ecommerce);
-    } else {
-      objectProperties = getGA4EventData(eventName, objectProperties);
+      }
+    if (!objectProperties.content_type) {
+      objectProperties = getGA4EventData(eventName, objectProperties, ecommerce);
     }
   }
 
@@ -930,6 +931,7 @@ function getUAEventData(eventName, objectProperties, ecommerce) {
       objectProperties = {
         content_type: 'product',
         contents: ecommerce[action].products.map((prod) => ({ id: prod.id, quantity: prod.quantity })),
+        content_ids: ecommerce[action].products.map((prod) => (prod.id)),
         value: ecommerce[action].products.reduce((acc, cur) => {
           const curVal = math.round(makeNumber(cur.price || 0) * (cur.quantity || 1) * 100) / 100;
           return acc + curVal;
@@ -947,14 +949,21 @@ function getUAEventData(eventName, objectProperties, ecommerce) {
   return objectProperties;
 }
 
-function getGA4EventData(eventName, objectProperties) {
+function getGA4EventData(eventName, objectProperties, ecommerce) {
   let items = getDL('items');
+  if (!items && ecommerce && ecommerce.items) {
+    items = ecommerce.items;
+  }
   let currencyFromItems = '';
   let valueFromItems = 0;
 
   if (items && items[0]) {
     objectProperties.contents = [];
+    objectProperties.content_ids = [];
     objectProperties.content_type = 'product';
+      if (['InitiateCheckout', 'Purchase'].indexOf(eventName)) {
+        objectProperties.num_items = 0;
+      }
     currencyFromItems = items[0].currency;
 
     if (!items[1]) {
@@ -974,6 +983,10 @@ function getGA4EventData(eventName, objectProperties) {
       }
 
       objectProperties.contents.push(content);
+      objectProperties.content_ids.push(content.id);
+      if (['InitiateCheckout', 'Purchase'].indexOf(eventName)) {
+        objectProperties.num_items = objectProperties.num_items + content.quantity || 1;
+      }
     });
   }
 
