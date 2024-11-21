@@ -311,7 +311,6 @@ function parseUserData(userData, userDataFrom, useDL) {
   else if (userDataFrom.ph) userData.ph = userDataFrom.ph;
 
   if (userDataFrom.firstName) userData.fn = userDataFrom.firstName;
-  else if (userDataFrom.FirstName) userData.fn = userDataFrom.FirstName;
   else if (userDataFrom.nameFirst) userData.fn = userDataFrom.nameFirst;
   else if (userDataFrom.first_name) userData.fn = userDataFrom.first_name;
   else if (userDataFrom.fn) userData.fn = userDataFrom.fn;
@@ -319,7 +318,6 @@ function parseUserData(userData, userDataFrom, useDL) {
   else if (userDataFrom.address && userDataFrom.address.first_name) userData.fn = userDataFrom.address.first_name;
 
   if (userDataFrom.lastName) userData.ln = userDataFrom.lastName;
-  else if (userDataFrom.LastName) userData.ln = userDataFrom.LastName;
   else if (userDataFrom.nameLast) userData.ln = userDataFrom.nameLast;
   else if (userDataFrom.last_name) userData.ln = userDataFrom.last_name;
   else if (userDataFrom.ln) userData.ln = userDataFrom.ln;
@@ -372,7 +370,7 @@ function getUAEventData(eventName, objectProperties, ecommerce) {
     if (ecommerce[action] && ecommerce[action].products && getType(ecommerce[action].products) === 'array') {
       objectProperties = {
         content_type: 'product',
-        contents: ecommerce[action].products.map((prod) => ({ id: prod.id, quantity: prod.quantity })),
+        contents: ecommerce[action].products.map((prod) => ({ id: prod.id, quantity: makeNumber(prod.quantity) || 1, item_price: makeNumber(prod.price)})),
         content_ids: ecommerce[action].products.map((prod) => (prod.id)),
         value: ecommerce[action].products.reduce((acc, cur) => {
           const curVal = math.round(makeNumber(cur.price || 0) * (cur.quantity || 1) * 100) / 100;
@@ -403,7 +401,7 @@ function getGA4EventData(eventName, objectProperties, ecommerce) {
     objectProperties.contents = [];
     objectProperties.content_ids = [];
     objectProperties.content_type = 'product';
-      if (['InitiateCheckout', 'Purchase'].indexOf(eventName)) {
+    if (['InitiateCheckout', 'Purchase'].indexOf(eventName) > -1) {
         objectProperties.num_items = 0;
       }
     currencyFromItems = items[0].currency;
@@ -417,16 +415,17 @@ function getGA4EventData(eventName, objectProperties, ecommerce) {
     items.forEach((d, i) => {
       let content = {};
       if (d.item_id) content.id = d.item_id;
-      if (d.quantity) content.quantity = d.quantity;
+      content.quantity = makeNumber(d.quantity) || 1 ;
 
       if (d.price) {
         let item_price = makeNumber(d.price);
         valueFromItems += d.quantity ? d.quantity * item_price : item_price;
+        content.item_price = item_price;
       }
 
       objectProperties.contents.push(content);
       objectProperties.content_ids.push(content.id);
-      if (['InitiateCheckout', 'Purchase'].indexOf(eventName)) {
+      if (['InitiateCheckout', 'Purchase'].indexOf(eventName) > -1) {
         objectProperties.num_items = objectProperties.num_items + content.quantity || 1;
       }
     });
